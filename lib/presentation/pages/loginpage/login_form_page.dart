@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:nubo/presentation/views/login/login_view.dart';
+import 'package:nubo/presentation/views/login/correo_contra_datos_view.dart';
 
-class LoginPage extends StatelessWidget {
-  static const String name = "login_page";
-  const LoginPage({super.key});
+class LoginFormPage extends StatelessWidget {
+  static const String name = "login_form_page";
+  const LoginFormPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +12,7 @@ class LoginPage extends StatelessWidget {
         child: Center(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 30.0),
-            child: LoginButtons(),
+            child: LoginForm(),
           ),
         ),
       ),

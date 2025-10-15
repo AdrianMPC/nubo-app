@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:nubo/config/config.dart';
 import 'package:nubo/presentation/utils/generic_button/generic_button.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
 
 class LoginButtons extends StatelessWidget {
-  final VoidCallback onLoginPressed;
-  const LoginButtons({super.key, required this.onLoginPressed});
+  const LoginButtons({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,9 +20,7 @@ class LoginButtons extends StatelessWidget {
         const SizedBox(height: 32),
         ButtonCustom(
           text: "Ingresar",
-          onPressed: () {
-            onLoginPressed;
-          },
+          onPressed: () {context.pushNamed("login_form_page");},
           width: double.infinity,
           textStyle: const TextStyle(
             fontFamily: robotoBold,
