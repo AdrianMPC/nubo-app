@@ -6,6 +6,7 @@ const pdfPrescription = 'assets/prescription.pdf';
 const logoBlue = 'assets/logo/EssaPlusBlue.png';
 
 //colors
+const background = Color(0xFFF7FBFF);
 const primary = Color(0xff004FB7);
 const primaryActive = Color(0xff003F92);
 const primaryLight = Color(0xffE6EDF8);
@@ -45,9 +46,62 @@ const gray700 = Color(0xff4D4D4D);
 const gray50 = Color(0xffF2F2F2);
 const gray800 = Color(0x00333333);
 
-//texts and fonts
-const poppinsBold = 'poppinsBold';
-const poppinsSemiBold = 'poppinsSemiBold';
-const poppinsMedium = 'poppinsMedium';
-const poppinsRegular = 'poppinsRegular';
-const poppinsLight = 'poppinsLight';
+// Roboto
+const robotoBlack = 'robotoBlack';
+const robotoBlackItalic = 'robotoBlackItalic';
+const robotoBold = 'robotoBold';
+const robotoBoldItalic = 'robotoBoldItalic';
+const robotoExtraBold = 'robotoExtraBold';
+const robotoExtraBoldItalic = 'robotoExtraBoldItalic';
+const robotoExtraLight = 'robotoExtraLight';
+const robotoExtraLightItalic = 'robotoExtraLightItalic';
+const robotoItalic = 'robotoItalic';
+const robotoLight = 'robotoLight';
+const robotoLightItalic = 'robotoLightItalic';
+const robotoMedium = 'robotoMedium';
+const robotoMediumItalic = 'robotoMediumItalic';
+const robotoRegular = 'robotoRegular';
+const robotoSemiBold = 'robotoSemiBold';
+const robotoSemiBoldItalic = 'robotoSemiBoldItalic';
+const robotoThin = 'robotoThin';
+const robotoThinItalic = 'robotoThinItalic';
+
+// Roboto Condensed
+const robotoCondensedBlack = 'robotoCondensedBlack';
+const robotoCondensedBlackItalic = 'robotoCondensedBlackItalic';
+const robotoCondensedBold = 'robotoCondensedBold';
+const robotoCondensedBoldItalic = 'robotoCondensedBoldItalic';
+const robotoCondensedExtraBold = 'robotoCondensedExtraBold';
+const robotoCondensedExtraBoldItalic = 'robotoCondensedExtraBoldItalic';
+const robotoCondensedExtraLight = 'robotoCondensedExtraLight';
+const robotoCondensedExtraLightItalic = 'robotoCondensedExtraLightItalic';
+const robotoCondensedItalic = 'robotoCondensedItalic';
+const robotoCondensedLight = 'robotoCondensedLight';
+const robotoCondensedLightItalic = 'robotoCondensedLightItalic';
+const robotoCondensedMedium = 'robotoCondensedMedium';
+const robotoCondensedMediumItalic = 'robotoCondensedMediumItalic';
+const robotoCondensedRegular = 'robotoCondensedRegular';
+const robotoCondensedSemiBold = 'robotoCondensedSemiBold';
+const robotoCondensedSemiBoldItalic = 'robotoCondensedSemiBoldItalic';
+const robotoCondensedThin = 'robotoCondensedThin';
+const robotoCondensedThinItalic = 'robotoCondensedThinItalic';
+
+// Roboto SemiCondensed
+const robotoSemiCondensedBlack = 'robotoSemiCondensedBlack';
+const robotoSemiCondensedBlackItalic = 'robotoSemiCondensedBlackItalic';
+const robotoSemiCondensedBold = 'robotoSemiCondensedBold';
+const robotoSemiCondensedBoldItalic = 'robotoSemiCondensedBoldItalic';
+const robotoSemiCondensedExtraBold = 'robotoSemiCondensedExtraBold';
+const robotoSemiCondensedExtraBoldItalic = 'robotoSemiCondensedExtraBoldItalic';
+const robotoSemiCondensedExtraLight = 'robotoSemiCondensedExtraLight';
+const robotoSemiCondensedExtraLightItalic = 'robotoSemiCondensedExtraLightItalic';
+const robotoSemiCondensedItalic = 'robotoSemiCondensedItalic';
+const robotoSemiCondensedLight = 'robotoSemiCondensedLight';
+const robotoSemiCondensedLightItalic = 'robotoSemiCondensedLightItalic';
+const robotoSemiCondensedMedium = 'robotoSemiCondensedMedium';
+const robotoSemiCondensedMediumItalic = 'robotoSemiCondensedMediumItalic';
+const robotoSemiCondensedRegular = 'robotoSemiCondensedRegular';
+const robotoSemiCondensedSemiBold = 'robotoSemiCondensedSemiBold';
+const robotoSemiCondensedSemiBoldItalic = 'robotoSemiCondensedSemiBoldItalic';
+const robotoSemiCondensedThin = 'robotoSemiCondensedThin';
+const robotoSemiCondensedThinItalic = 'robotoSemiCondensedThinItalic';
