@@ -20,6 +20,11 @@ final appRouter = GoRouter(
       name: LoginFormPage.name,
       builder: (context, state) => const LoginFormPage(),
     ),
+    GoRoute(
+      path: '/register',
+      name: RegisterFormPage.name,
+      builder: (context, state) => const RegisterFormPage(),
+    ),
 
     // ---------- Shell con BottomNav persistente ----------
     ShellRoute(
