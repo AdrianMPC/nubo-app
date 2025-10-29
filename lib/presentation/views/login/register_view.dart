@@ -4,6 +4,7 @@ import 'package:nubo/config/config.dart';
 import 'package:nubo/presentation/utils/generic_button/generic_button.dart';
 import 'package:nubo/presentation/utils/generic_textfield/g_passwordtextfield.dart';
 import 'package:nubo/presentation/utils/generic_textfield/g_textfield.dart';
+import 'package:nubo/services/auth_service.dart';
 import 'package:nubo/presentation/utils/navegation_router_utils/safe_navegation.dart';
 import 'package:nubo/presentation/utils/snackbar/snackbar.dart';
 
@@ -25,6 +26,7 @@ class _RegisterFormState extends State<RegisterForm> {
   final _repeatController = TextEditingController();
 
   bool _termsAccepted = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -206,16 +208,14 @@ class _RegisterFormState extends State<RegisterForm> {
 
             // Botón principal Registrarse
             ButtonCustom(
-              text: "Registrarse",
-              enabled: _termsAccepted, // controla si el botón se ve activo o gris
+              text: _isLoading ? "Registrando..." : "Registrarse",
+              enabled: _termsAccepted && !_isLoading, // controla si el botón se ve activo o gris
               onPressed: () {
                 // si no está habilitado, salimos sin hacer nada
-                if (!_termsAccepted) return;
+                if (!_termsAccepted || _isLoading) return;
 
                 if (_formKey.currentState!.validate()) {
-                  // TODO: lógica real de registro (API, Supabase, etc.)
-                  SnackbarUtil.showSnack(context, message: 'Registro exitoso');
-                  NavigationHelper.safePop(context); // vuelve al login
+                  _registerWithEmailAndPassword();
                 } else {
                   SnackbarUtil.showSnack(context, message: 'Corrige los errores antes de continuar');
                 }
@@ -255,5 +255,48 @@ class _RegisterFormState extends State<RegisterForm> {
         ),
       ),
     );
+  }
+
+  // Método para registrar usuario con Firebase Auth
+  Future<void> _registerWithEmailAndPassword() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Crear usuario con Firebase Auth
+      await AuthService.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passController.text,
+      );
+
+      // Actualizar el perfil del usuario con el nombre de usuario
+      await AuthService.updateUserProfile(
+        displayName: _userController.text.trim(),
+      );
+
+      // Enviar email de verificación
+      await AuthService.sendEmailVerification();
+
+      if (mounted) {
+        AuthService.showSuccessSnackBar(
+          context,
+          '¡Registro exitoso! Se ha enviado un email de verificación.',
+        );
+        
+        // Navegar de vuelta al login
+        context.pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        AuthService.showErrorSnackBar(context, e.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 }
