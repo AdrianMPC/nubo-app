@@ -1,11 +1,12 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:nubo/config/config.dart';
 import 'package:nubo/presentation/utils/generic_button/generic_button.dart';
 import 'package:nubo/presentation/utils/generic_textfield/g_passwordtextfield.dart';
 import 'package:nubo/presentation/utils/generic_textfield/g_textfield.dart';
 import 'package:nubo/services/auth_service.dart';
+import 'package:nubo/presentation/utils/navegation_router_utils/safe_navegation.dart';
+import 'package:nubo/presentation/utils/snackbar/snackbar.dart';
 
 class RegisterForm extends StatefulWidget {
   const RegisterForm({super.key});
@@ -52,7 +53,7 @@ class _RegisterFormState extends State<RegisterForm> {
               alignment: Alignment.centerLeft,
               child: IconButton(
                 icon: const Icon(Icons.arrow_back),
-                onPressed: () => context.pop(),
+                onPressed: () => NavigationHelper.safePop(context), // vuelve al login
               ),
             ),
 
@@ -166,7 +167,7 @@ class _RegisterFormState extends State<RegisterForm> {
                       decoration: TextDecoration.underline,
                     ),
                     recognizer: TapGestureRecognizer()
-                      ..onTap = () => context.pop(),
+                      ..onTap = () => NavigationHelper.safePop(context), // vuelve al login
                   ),
                 ],
               ),
@@ -216,10 +217,7 @@ class _RegisterFormState extends State<RegisterForm> {
                 if (_formKey.currentState!.validate()) {
                   _registerWithEmailAndPassword();
                 } else {
-                  AuthService.showErrorSnackBar(
-                    context,
-                    'Por favor, corrige los errores antes de continuar',
-                  );
+                  SnackbarUtil.showSnack(context, message: 'Corrige los errores antes de continuar');
                 }
               },
               width: double.infinity,
