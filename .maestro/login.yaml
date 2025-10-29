@@ -1,4 +1,4 @@
-appId: com.example.nubo_app
+appId: com.nubo_app
 env:
   USERNAME: ${MAESTRO_EMAIL}
   PASSWORD: ${MAESTRO_PASSWORD }
