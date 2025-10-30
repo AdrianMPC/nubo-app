@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 class MissionsPage extends StatefulWidget {
   static const String name = 'missions_page';
@@ -25,7 +27,7 @@ class Mission {
 }
 
 class _MissionsPageState extends State<MissionsPage> {
-  final List<Mission> missions = [
+  final missions = <Mission>[
     Mission(
       title: 'Recicla objetos sólidos',
       short: 'plásticos, latas, papel, bolsa, cartón, vidrios, cable',
@@ -33,10 +35,10 @@ class _MissionsPageState extends State<MissionsPage> {
     ),
   ];
 
+  final _picker = ImagePicker();
+
   @override
   Widget build(BuildContext context) {
-    const acceptColor = Color(0xFF31B14F);
-
     return Scaffold(
       backgroundColor: const Color(0xFFF6F9FB),
       appBar: AppBar(
@@ -58,7 +60,7 @@ class _MissionsPageState extends State<MissionsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- Racha ---
+              // Racha
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: _card(),
@@ -79,7 +81,7 @@ class _MissionsPageState extends State<MissionsPage> {
               ),
               const SizedBox(height: 16),
 
-              // --- Recompensa especial ---
+              // Recompensa especial (decorativa)
               _SpecialRewardCard(
                 title: '¡Realiza tu Eco Quiz!',
                 subtitle:
@@ -93,7 +95,7 @@ class _MissionsPageState extends State<MissionsPage> {
               ),
               const SizedBox(height: 12),
 
-              // --- Chips (decorativos por ahora) ---
+              // Chips (decorativos)
               Wrap(
                 spacing: 8,
                 children: const [
@@ -104,12 +106,11 @@ class _MissionsPageState extends State<MissionsPage> {
               ),
               const SizedBox(height: 12),
 
-              // --- Tarjetas de misiones ---
+              // Misiones
               for (int i = 0; i < missions.length; i++)
                 _MissionCard(
                   mission: missions[i],
-                  onAccept: () => _openMissionDetail(i),
-                  acceptColor: acceptColor,
+                  onTapPrimary: () => _onPrimaryPressed(i),
                 ),
             ],
           ),
@@ -118,58 +119,327 @@ class _MissionsPageState extends State<MissionsPage> {
     );
   }
 
-  // --------- FLOW: Sheet -> Confirm -> Update ----------
-  Future<void> _openMissionDetail(int index) async {
-    final mission = missions[index];
-    if (mission.status == MissionStatus.inProgress) {
-      // Aquí podrías navegar al progreso
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Siguiendo: ${mission.title}')),
-      );
+  // Lógica del botón primario de la tarjeta
+  Future<void> _onPrimaryPressed(int index) async {
+    final m = missions[index];
+
+    // Si está disponible: sheet -> confirm -> pasar a "Seguir"
+    if (m.status == MissionStatus.available) {
+      final accepted = await _openAcceptFlow(context, m);
+      if (accepted == true) {
+        setState(() => missions[index].status = MissionStatus.inProgress);
+      }
       return;
     }
 
-    final acceptedFromSheet = await showModalBottomSheet<bool>(
+    // Si ya está en progreso: abrir popup con "Subir" / "Cancelar"
+    final action = await showDialog<_FollowAction>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => _FollowPopup(missionTitle: m.title),
+    );
+
+    if (action == _FollowAction.cancel) return;
+
+    if (action == _FollowAction.upload) {
+      // 1) abrir cámara
+      final XFile? shot = await _picker.pickImage(source: ImageSource.camera);
+      if (shot == null) return;
+
+      // 2) navegar a página de progreso (Figura 3) y luego mostrar imagen (Figura 4)
+      if (!context.mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => MissionProgressPage(
+            mission: m,
+            imageFile: File(shot.path),
+          ),
+        ),
+      );
+    }
+  }
+
+  // --- Flow de aceptación (ya implementado antes) ---
+  Future<bool?> _openAcceptFlow(BuildContext context, Mission m) async {
+    final fromSheet = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
         return _MissionDetailSheet(
-          title: mission.title,
-          short: mission.short,
+          title: m.title,
+          short: m.short,
           onAccept: () => Navigator.of(context).pop(true),
         );
       },
     );
 
-    if (acceptedFromSheet == true) {
+    if (fromSheet == true) {
       final cont = await showDialog<bool>(
         context: context,
         barrierDismissible: false,
-        builder: (context) {
-          return _ConfirmDialog(missionTitle: mission.title);
-        },
+        builder: (context) => _ConfirmDialog(missionTitle: m.title),
       );
-
-      if (cont == true) {
-        setState(() => missions[index].status = MissionStatus.inProgress);
-      }
+      return cont == true;
     }
+    return false;
   }
 }
 
-/// ------------------ Widgets ------------------
+/// ------------------ Pantalla de PROGRESO (Fig. 3 y 4) ------------------
+class MissionProgressPage extends StatefulWidget {
+  final Mission mission;
+  final File imageFile;
+  const MissionProgressPage({super.key, required this.mission, required this.imageFile});
 
+  @override
+  State<MissionProgressPage> createState() => _MissionProgressPageState();
+}
+
+class _MissionProgressPageState extends State<MissionProgressPage> {
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _simulateBackend();
+  }
+
+  Future<void> _simulateBackend() async {
+    // TODO (BACKEND): reemplazar por tu llamada HTTP a la API de análisis.
+    // Por ejemplo:
+    // final resp = await http.post(Uri.parse(API_URL), body: {...});
+    // setState(() { _loading = false; resultados = resp.body; });
+    await Future.delayed(const Duration(seconds: 2)); // Simulación de análisis
+    if (mounted) setState(() => _loading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF6F9FB),
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: const Color(0xFFBFEAFC),
+        centerTitle: true,
+        title: const Text('Misión'),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  widget.mission.title,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    height: 1.1,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                height: 56,
+                width: 56,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFD2F3D0),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.backpack_rounded, size: 28),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  widget.mission.short,
+                  style: TextStyle(color: Colors.black.withOpacity(.7)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Icon(Icons.monetization_on_outlined, size: 20),
+              const SizedBox(width: 4),
+              Text('${widget.mission.reward}',
+                  style: const TextStyle(fontWeight: FontWeight.w800)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 12),
+          const Text('Tu misión está siendo',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 16),
+
+          // Área “loading” o imagen cargada
+          Center(
+            child: Container(
+              width: double.infinity,
+              height: 240,
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: Colors.black12),
+              ),
+              child: _loading
+                  ? Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        SizedBox(
+                          width: 36,
+                          height: 36,
+                          child: CircularProgressIndicator(strokeWidth: 3),
+                        ),
+                        SizedBox(height: 8),
+                        Text('Espere...'),
+                      ],
+                    )
+                  : FittedBox(
+                      fit: BoxFit.cover,
+                      clipBehavior: Clip.hardEdge,
+                      child: Image.file(widget.imageFile),
+                    ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+          const Divider(),
+          const SizedBox(height: 8),
+          Text('Prueba a hacer estas misiones...',
+              style: TextStyle(color: Colors.black.withOpacity(.7))),
+          const SizedBox(height: 12),
+          // Sugerencia (estática)
+          Container(
+            decoration: _card(),
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  height: 56,
+                  width: 56,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFD2F3D0),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.backpack_rounded),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text('Reciclaje en la familia',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+                ),
+                _PrimaryButton(
+                  label: 'Aceptar',
+                  color: const Color(0xFF31B14F),
+                  onPressed: () {},
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// ---------------- POPUP "Seguir" (Figura 1) ----------------
+enum _FollowAction { upload, cancel }
+
+class _FollowPopup extends StatelessWidget {
+  final String missionTitle;
+  const _FollowPopup({required this.missionTitle});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Row(
+              children: const [
+                Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                Spacer(),
+                Icon(Icons.help_outline_rounded),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              missionTitle,
+              style: const TextStyle(
+                  fontSize: 20, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 12),
+
+            // Contenido (idéntico a la hoja)
+            Row(
+              children: [
+                Container(
+                  height: 56,
+                  width: 56,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFD2F3D0),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.backpack_rounded, size: 28),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'plásticos, latas, papel, bolsa, cartón, vidrios, cable',
+                    style: TextStyle(color: Colors.black.withOpacity(.7)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const _Bullet(text: 'Recolecta uno de los materiales descritos.'),
+            const _Bullet(text: 'Junta hasta 3 latas o botellas plásticas.'),
+            const _Bullet(text: 'Toma una foto del material reciclado.'),
+            const _Bullet(text: 'Espere hasta que se confirme la misión.'),
+            const _Bullet(text: 'Canjee sus puntos ganados por la misión.'),
+            const SizedBox(height: 16),
+
+            Row(
+              children: [
+                Expanded(
+                  child: _PrimaryButton(
+                    label: 'Subir  📷',
+                    color: const Color(0xFF12A1BC),
+                    onPressed: () => Navigator.of(context).pop(_FollowAction.upload),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _PrimaryButton(
+                    label: 'Cancelar',
+                    color: const Color(0xFFE25741),
+                    onPressed: () => Navigator.of(context).pop(_FollowAction.cancel),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// ---------------- Widgets reutilizables (cards, botones, etc.) ----------------
 class _MissionCard extends StatelessWidget {
   final Mission mission;
-  final VoidCallback onAccept;
-  final Color acceptColor;
-
-  const _MissionCard({
-    required this.mission,
-    required this.onAccept,
-    required this.acceptColor,
-  });
+  final VoidCallback onTapPrimary;
+  const _MissionCard({required this.mission, required this.onTapPrimary});
 
   @override
   Widget build(BuildContext context) {
@@ -187,8 +457,8 @@ class _MissionCard extends StatelessWidget {
               Container(
                 height: 56,
                 width: 56,
-                decoration: BoxDecoration(
-                  color: Colors.green.shade100,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFD2F3D0),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.backpack_rounded, size: 28),
@@ -218,9 +488,9 @@ class _MissionCard extends StatelessWidget {
                         _PrimaryButton(
                           label: isFollowing ? 'Seguir' : 'Aceptar',
                           color: isFollowing
-                              ? const Color(0xFF12A1BC) // azul “seguir”
-                              : const Color(0xFF31B14F), // verde aceptar
-                          onPressed: onAccept,
+                              ? const Color(0xFF12A1BC)
+                              : const Color(0xFF31B14F),
+                          onPressed: onTapPrimary,
                         ),
                       ],
                     ),
@@ -261,7 +531,6 @@ class _SpecialRewardCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Cinta superior
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
@@ -335,11 +604,7 @@ class _CategoryChip extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool selected;
-  const _CategoryChip({
-    required this.label,
-    required this.icon,
-    this.selected = false,
-  });
+  const _CategoryChip({required this.label, required this.icon, this.selected = false});
 
   @override
   Widget build(BuildContext context) {
@@ -371,11 +636,7 @@ class _PrimaryButton extends StatelessWidget {
   final String label;
   final Color color;
   final VoidCallback onPressed;
-  const _PrimaryButton({
-    required this.label,
-    required this.color,
-    required this.onPressed,
-  });
+  const _PrimaryButton({required this.label, required this.color, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -393,7 +654,6 @@ class _PrimaryButton extends StatelessWidget {
   }
 }
 
-/// ---------- Modal de Detalle (Figura 1) ----------
 class _MissionDetailSheet extends StatelessWidget {
   final String title;
   final String short;
@@ -408,18 +668,13 @@ class _MissionDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      // Fondo oscuro
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Stack(
         children: [
-          // Capa oscura
           GestureDetector(
             onTap: () => Navigator.pop(context, false),
             child: Container(color: Colors.black.withOpacity(.5)),
           ),
-          // Tarjeta
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
@@ -440,7 +695,6 @@ class _MissionDetailSheet extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header con back y ayuda
                   Row(
                     children: const [
                       Icon(Icons.arrow_back_ios_new_rounded, size: 18),
@@ -458,20 +712,18 @@ class _MissionDetailSheet extends StatelessWidget {
                       Container(
                         height: 56,
                         width: 56,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFD2F3D0),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFD2F3D0),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.backpack_rounded, size: 28),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Text(
-                          short,
-                          style: TextStyle(
-                            color: Colors.black.withOpacity(.72),
-                          ),
-                        ),
+                        child: Text(short,
+                            style: TextStyle(
+                              color: Colors.black.withOpacity(.72),
+                            )),
                       ),
                     ],
                   ),
@@ -499,25 +751,6 @@ class _MissionDetailSheet extends StatelessWidget {
   }
 }
 
-class _Bullet extends StatelessWidget {
-  final String text;
-  const _Bullet({required this.text});
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('•  ', style: TextStyle(fontSize: 18)),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 15))),
-        ],
-      ),
-    );
-  }
-}
-
-/// ---------- Diálogo de Confirmación (Figura 2) ----------
 class _ConfirmDialog extends StatelessWidget {
   final String missionTitle;
   const _ConfirmDialog({required this.missionTitle});
@@ -533,8 +766,7 @@ class _ConfirmDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text('¡Genial!',
-                style: TextStyle(
-                    fontSize: 24, fontWeight: FontWeight.w900)),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
             const SizedBox(height: 10),
             Text(
               'Tu misión $missionTitle está dentro de tus misiones pendientes.',
@@ -549,6 +781,24 @@ class _ConfirmDialog extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _Bullet extends StatelessWidget {
+  final String text;
+  const _Bullet({required this.text});
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('•  ', style: TextStyle(fontSize: 18)),
+          Expanded(child: Text(text, style: const TextStyle(fontSize: 15))),
+        ],
       ),
     );
   }
