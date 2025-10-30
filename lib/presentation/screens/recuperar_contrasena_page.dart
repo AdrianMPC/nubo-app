@@ -27,14 +27,12 @@ class _RecuperarContrasenaPageState extends State<RecuperarContrasenaPage> {
 
   Future<void> _onContinuar() async {
     if (!_formKey.currentState!.validate()) return;
-    // TODO: Llama a tu API de recuperación con _emailCtrl.text.trim()
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Si el correo existe, enviaremos un mensaje.')),
     );
   }
 
   void _onEnviarDeNuevo() {
-    // TODO: Reintentar envío (si ya se solicitó antes).
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Reenviando correo…')),
     );
@@ -42,110 +40,137 @@ class _RecuperarContrasenaPageState extends State<RecuperarContrasenaPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
-    final padding = MediaQuery.of(context).size.width > 420 ? 32.0 : 20.0;
+    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FB), // gris muy claro como la imagen
+      backgroundColor: const Color(0xFFF5F7FA), // como en la imagen
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.black87,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: padding).copyWith(top: 8, bottom: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Título grande
-              Text(
-                'Recuperar contraseña',
-                style: textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Descripción
-              Text(
-                'Escriba el correo de su cuenta,\nsi existe se le enviará un correo.',
-                style: textTheme.bodyMedium?.copyWith(color: Colors.black54, height: 1.35),
-              ),
-              const SizedBox(height: 24),
-
-              // Formulario
-              Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    // Campo correo
-                    TextFormField(
-                      controller: _emailCtrl,
-                      keyboardType: TextInputType.emailAddress,
-                      textInputAction: TextInputAction.done,
-                      validator: _emailValidator,
-                      decoration: InputDecoration(
-                        hintText: 'Correo',
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(22),
-                          borderSide: BorderSide.none,
-                        ),
-                        // Sombra suave como chip
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(22),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 380),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // título
+                  Text(
+                    'Recuperar contraseña',
+                    textAlign: TextAlign.center,
+                    style: textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
                     ),
-                    const SizedBox(height: 12),
-
-                    // Enviar de nuevo
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton(
-                        onPressed: _onEnviarDeNuevo,
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.black54,
-                          padding: EdgeInsets.zero,
-                          textStyle: const TextStyle(decoration: TextDecoration.underline),
-                        ),
-                        child: const Text('Enviar de nuevo'),
-                      ),
+                  ),
+                  const SizedBox(height: 12),
+                  // descripción
+                  Text(
+                    'Escriba el correo de su cuenta,\nsi existe se le enviará un correo.',
+                    textAlign: TextAlign.center,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: Colors.black54,
+                      height: 1.35,
                     ),
-                    const SizedBox(height: 8),
+                  ),
+                  const SizedBox(height: 26),
 
-                    // Botón Continuar
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: ElevatedButton(
-                        onPressed: _onContinuar,
-                        style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  // formulario
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        // caja de correo
+                        Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE3E6EB), // gris como el de la imagen
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: TextFormField(
+                            controller: _emailCtrl,
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.done,
+                            validator: _emailValidator,
+                            decoration: const InputDecoration(
+                              hintText: 'Correo',
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 14,
+                              ),
+                            ),
+                          ),
                         ),
-                        child: const Text('Continuar'),
-                      ),
+
+                        const SizedBox(height: 14),
+
+                        // enviar de nuevo
+                        TextButton(
+                          onPressed: _onEnviarDeNuevo,
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: const Size(0, 0),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            'Enviar de nuevo',
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: Colors.black87,
+                              decoration: TextDecoration.underline,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 14),
+
+                        // botón continuar
+                        SizedBox(
+                          width: double.infinity,
+                          height: 46,
+                          child: ElevatedButton(
+                            onPressed: _onContinuar,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF3C82C3),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: const Text(
+                              'Continuar',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
+                  ),
 
-              const SizedBox(height: 40),
+                  const SizedBox(height: 48),
 
-              // Footer centrado
-              Center(
-                child: Text(
-                  'Nubo ©Copyright 2025',
-                  style: textTheme.bodySmall?.copyWith(color: Colors.black45),
-                ),
+                  Text(
+                    'Nubo ©Copyright 2025',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: Colors.black45,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

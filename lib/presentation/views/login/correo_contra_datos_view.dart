@@ -6,6 +6,7 @@ import 'package:nubo/presentation/utils/generic_button/generic_button.dart';
 import 'package:nubo/presentation/utils/generic_textfield/g_passwordtextfield.dart';
 import 'package:nubo/presentation/utils/generic_textfield/g_textfield.dart';
 
+
 class LoginForm extends StatelessWidget {
   const LoginForm({super.key});
 
@@ -51,18 +52,19 @@ class LoginForm extends StatelessWidget {
                 alignment: Alignment.center,
                 child: TextButton(
                   onPressed: () {
-                    // TODO: Navegar a recuperación
+                    context.push('/recuperar-contrasena');
                   },
                   child: Text(
                     "¿Olvidaste tu contraseña?",
                     style: textTheme.bodyMedium?.copyWith(
-                        fontFamily: robotoBold,
-                        color: Colors.black87,
-                        decoration: TextDecoration.underline,
-                      ),
+                      fontFamily: robotoBold,
+                      color: Colors.black87,
+                      decoration: TextDecoration.underline,
+                    ),
                   ),
                 ),
               ),
+
 
               const SizedBox(height: 8),
 
