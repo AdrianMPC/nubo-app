@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-//pdf
-const pdfPrescription = 'assets/prescription.pdf';
-
-//logos
-const logoBlue = 'assets/logo/EssaPlusBlue.png';
 
 //colors
+const buttonprimary = Color(0xFF3C82C3);
 const background = Color(0xFFF7FBFF);
+const white = Color(0xFFFFFFFF);
 const primary = Color(0xff004FB7);
 const primaryActive = Color(0xff003F92);
 const primaryLight = Color(0xffE6EDF8);
@@ -105,3 +102,15 @@ const robotoSemiCondensedSemiBold = 'robotoSemiCondensedSemiBold';
 const robotoSemiCondensedSemiBoldItalic = 'robotoSemiCondensedSemiBoldItalic';
 const robotoSemiCondensedThin = 'robotoSemiCondensedThin';
 const robotoSemiCondensedThinItalic = 'robotoSemiCondensedThinItalic';
+
+// svg
+const recycleSvg = 'assets/icons-svg/recycle.svg';
+const lightingSvg = 'assets/icons-svg/lightning.svg';
+const trashSvg = 'assets/icons-svg/trash.svg';
+const streakSvg = 'assets/icons-svg/streak.svg';
+const nuboCoinSvg = 'assets/icons-svg/nubo_coin.svg';
+
+// img - png
+
+const recycleGreen = 'assets/main-menu/recycle_green.png';
+const rewardsOrange = 'assets/main-menu/rewards.png';

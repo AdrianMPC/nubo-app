@@ -1,21 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:go_router/go_router.dart';
 import 'package:nubo/config/config.dart';
 import 'package:nubo/presentation/utils/generic_button/generic_button.dart';
 import 'package:nubo/presentation/utils/generic_textfield/g_passwordtextfield.dart';
 import 'package:nubo/presentation/utils/generic_textfield/g_textfield.dart';
+import 'package:nubo/services/auth_service.dart';
+import 'package:nubo/presentation/utils/navegation_router_utils/safe_navegation.dart';
+import 'package:nubo/presentation/utils/snackbar/snackbar.dart';
 
 
-class LoginForm extends StatelessWidget {
+class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
+
+  @override
+  State<LoginForm> createState() => _LoginFormState();
+}
+
+class _LoginFormState extends State<LoginForm> {
+  final _formKey = GlobalKey<FormState>();
+  final _correoController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _correoController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    const String vacio = 'No puede dejar este campo vacío';
 
     return SafeArea(
-        child: SingleChildScrollView(
+      child: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -24,7 +46,7 @@ class LoginForm extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: IconButton(
                   icon: const Icon(Icons.arrow_back),
-                  onPressed: (){context.pop();}
+                  onPressed: () => NavigationHelper.safePop(context)
                 ),
               ),
 
@@ -40,10 +62,37 @@ class LoginForm extends StatelessWidget {
 
               const SizedBox(height: 36),
 
-              // Campos de texto
-              const UserField(icon: Icons.email_outlined, hintText: "Correo"),
+              // Campo de correo con validación
+              UserField(
+                controller: _correoController,
+                icon: Icons.email_outlined,
+                hintText: "Correo",
+                validador: (String? value) {
+                  if (value == null || value.isEmpty) return vacio;
+                  final emailRegex = RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                  if (!emailRegex.hasMatch(value)) {
+                    return 'Ingrese un correo válido';
+                  }
+                  return null;
+                },
+              ),
+
               const SizedBox(height: 20),
-              const PasswordField(backgroundColor: Colors.white, hintText: "Contraseña"),
+
+              // Campo de contraseña con validación
+              PasswordField(
+                controller: _passwordController,
+                backgroundColor: Colors.white,
+                hintText: "Contraseña",
+                validator: (String? value) {
+                  if (value == null || value.isEmpty) return vacio;
+                  if (value.length < 6) {
+                    return 'Debe tener al menos 6 caracteres';
+                  }
+                  return null;
+                },
+              ),
 
               const SizedBox(height: 16),
 
@@ -52,7 +101,8 @@ class LoginForm extends StatelessWidget {
                 alignment: Alignment.center,
                 child: TextButton(
                   onPressed: () {
-                    context.push('/recuperar-contrasena');
+                    _showPasswordResetDialog();
+                    NavigationHelper.safePush(context, 'recuperar');
                   },
                   child: Text(
                     "¿Olvidaste tu contraseña?",
@@ -70,16 +120,21 @@ class LoginForm extends StatelessWidget {
 
               // Botón principal de inicio de sesión
               ButtonCustom(
-                text: "Iniciar Sesión",
-                onPressed: () {
-                  // TODO: Acción de login
-                },
+                text: _isLoading ? "..." : "Iniciar Sesión",
                 width: double.infinity,
                 padding: 14,
                 color: const Color(0xFF3C82C3),
                 colorHover: const Color(0xFF2E6EAC),
                 colorText: Colors.white,
                 fontsizeText: 18,
+                enabled: !_isLoading,
+                onPressed: _isLoading ? null : () async {
+                  if (_formKey.currentState!.validate()) {
+                    await _signInWithEmailAndPassword();
+                  } else {
+                    SnackbarUtil.showSnack(context, message: "Corrige los errores antes de continuar");
+                  }
+                },
                 boxShadow: const [
                   BoxShadow(
                     color: Colors.black26,
@@ -104,9 +159,7 @@ class LoginForm extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   GestureDetector(
-                    onTap: () {
-                      // TODO: Navegar a registro
-                    },
+                    onTap: () => NavigationHelper.safePush(context,'/register'),
                     child: Text(
                       "Regístrate",
                       style: textTheme.bodyMedium?.copyWith(
@@ -141,14 +194,14 @@ class LoginForm extends StatelessWidget {
                         fontFamily: robotoBold,
                         fontSize: 16,
                         letterSpacing: 0.2,
-                        color: Colors.blueGrey, // hack
+                        color: Colors.blueGrey,
                       ),
                       hasBorder: true,
                       boxShadow: const [
                         BoxShadow(
-                          color: Colors.black,
-                          blurRadius: 8,
-                          offset: Offset(0, 4),
+                          color: Colors.black12,
+                          blurRadius: 6,
+                          offset: Offset(0, 3),
                         ),
                       ],
                     ),
@@ -167,9 +220,9 @@ class LoginForm extends StatelessWidget {
                       hasBorder: true,
                       boxShadow: const [
                         BoxShadow(
-                          color: Colors.black,
-                          blurRadius: 8,
-                          offset: Offset(0, 4),
+                          color: Colors.black12,
+                          blurRadius: 6,
+                          offset: Offset(0, 3),
                         ),
                       ],
                     ),
@@ -179,9 +232,9 @@ class LoginForm extends StatelessWidget {
 
               const SizedBox(height: 40),
 
-              // Copyright
+              // Footer
               const Text(
-                "Nubo @Copyright 2025",
+                "Nubo © 2025",
                 style: TextStyle(
                   fontFamily: robotoMedium,
                   color: Colors.black87,
@@ -191,6 +244,103 @@ class LoginForm extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // Método para iniciar sesión con Firebase Auth
+  Future<void> _signInWithEmailAndPassword() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await AuthService.signInWithEmailAndPassword(
+        email: _correoController.text.trim(),
+        password: _passwordController.text,
       );
+
+      // Si el login es exitoso, navegar al home
+      if (mounted) {
+        SnackbarUtil.showSnack(context, message: '¡Inicio de sesión exitoso!', backgroundColor: Colors.green.shade600);
+        NavigationHelper.safePushReplacement(context,'/home');
+      }
+    } catch (e) {
+      if (mounted) {
+        SnackbarUtil.showSnack(context, message: e.toString() , backgroundColor: Colors.red.shade600, duration: Duration(seconds: 3));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  // Método para mostrar diálogo de recuperación de contraseña
+  void _showPasswordResetDialog() {
+    final TextEditingController emailController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Recuperar Contraseña',
+            style: TextStyle(
+              fontFamily: robotoBold,
+              fontSize: 18,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Ingresa tu correo electrónico para recibir un enlace de recuperación:',
+                style: TextStyle(
+                  fontFamily: robotoRegular,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(
+                  labelText: 'Correo electrónico',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.email),
+                ),
+                keyboardType: TextInputType.emailAddress,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (emailController.text.isNotEmpty) {
+                  try {
+                    await AuthService.sendPasswordResetEmail(emailController.text.trim());
+                    if (!context.mounted) return;
+                    NavigationHelper.safePop(context);
+                    SnackbarUtil.showSnack(context, message: '¡Inicio de sesión exitoso!', backgroundColor: Colors.green.shade600);
+                  } catch (e) {
+                    if (!context.mounted) return;
+                    SnackbarUtil.showSnack(context, message: e.toString() , backgroundColor: Colors.red.shade600, duration: const Duration(seconds: 3));
+                  }
+                } else {
+                  SnackbarUtil.showSnack(context, message: 'Por favor, ingresa tu correo electrónico.' , backgroundColor: Colors.red.shade600, duration: const Duration(seconds: 3));
+                }
+              },
+              child: const Text('Enviar'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
