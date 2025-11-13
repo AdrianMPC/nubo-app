@@ -14,7 +14,7 @@ class ImpactSection extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         gradient: LinearGradient(
-          colors: [NuboColors.green400.withOpacity(0.2), NuboColors.green500.withOpacity(0.25)],
+          colors: [NuboColors.green400.withValues(alpha:0.2), NuboColors.green500.withValues(alpha:0.25)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
