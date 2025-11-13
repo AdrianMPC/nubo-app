@@ -7,8 +7,8 @@ import 'package:mailer/smtp_server.dart';
 Future<bool> enviarCodigoProvisional(String toEmail) async {
   // ⚠️ CREDENCIALES EMBEBIDAS — SOLO TEMPORAL (mueve esto a backend ASAP)
   // ====== Opción 1: Gmail (recomendado para POC) ======
-  const smtpUser = 'aldhair.ordonez@usil.pe';        // <-- tu correo remitente
-  const smtpAppPassword = 'Almaster17:)';  // <-- App Password (con 2FA)
+  const smtpUser = '';        // <-- tu correo remitente
+  const smtpAppPassword = '';  // <-- App Password (con 2FA)
   final smtpServer = gmail(smtpUser, smtpAppPassword);
 
   // ====== Opción 2: Office365/Outlook (comenta arriba y usa esto) ======
