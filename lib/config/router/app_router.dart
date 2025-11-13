@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nubo/presentation/pages/pages.dart';
+import '../../presentation/views/home/rankings/rankings_view.dart';
 
 final _rootKey = GlobalKey<NavigatorState>();
 final _shellKey = GlobalKey<NavigatorState>();
@@ -52,6 +53,12 @@ final appRouter = GoRouter(
           pageBuilder: (_, __) => const NoTransitionPage(child: ProfilePage()),
         ),
       ],
+    ),
+
+    GoRoute(
+      path: '/rankings',
+      name: RankingsPage.routeName,
+      builder: (_, __) => const RankingsPage(),
     ),
 
     GoRoute(

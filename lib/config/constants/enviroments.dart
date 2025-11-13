@@ -108,6 +108,9 @@ const recycleSvg = 'assets/icons-svg/recycle.svg';
 const lightingSvg = 'assets/icons-svg/lightning.svg';
 const trashSvg = 'assets/icons-svg/trash.svg';
 const streakSvg = 'assets/icons-svg/streak.svg';
+const googleSvg = 'assets/icons-svg/google.svg';
+const facebookSvg = 'assets/icons-svg/facebook.svg';
+const crownSolid = 'assets/icons-svg/crown-solid-full.svg';
 
 // img - png
 
