@@ -13,7 +13,7 @@ class CollectionPointsPage extends StatefulWidget {
 class _CollectionPointsPageState extends State<CollectionPointsPage> {
   final _repo = CollectionPointsRepoMock();
   CollectionPointFilter _filter = const CollectionPointFilter();
-  bool _onlyNearby = true; // “Puntos cercanos” del wireframe
+  final bool _onlyNearby = true; // “Puntos cercanos” del wireframe
   MissionState? _chipState; // null/todos, activo, inactivo
 
   Future<List<CollectionPoint>> _load() => _repo.fetch(
@@ -36,7 +36,7 @@ class _CollectionPointsPageState extends State<CollectionPointsPage> {
               Container(
                 height: 160,
                 decoration: BoxDecoration(
-                  color: color.surfaceVariant.withOpacity(0.45),
+                  color: color.surfaceContainerHighest.withOpacity(0.45),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: color.outlineVariant.withOpacity(0.5)),
                 ),
@@ -181,7 +181,7 @@ class _PointTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isActive ? Colors.green.withOpacity(0.15) : color.surfaceVariant,
+        color: isActive ? Colors.green.withOpacity(0.15) : color.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(isActive ? 'Activo' : 'Libre',

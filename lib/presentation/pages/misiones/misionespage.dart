@@ -124,6 +124,7 @@ class _MissionsPageState extends State<MissionsPage> {
         }),
       ),
     );
+    if (!mounted) return;
 
     if (accepted == true) {
       final cont = await showDialog<bool>(
@@ -131,6 +132,8 @@ class _MissionsPageState extends State<MissionsPage> {
         barrierDismissible: false,
         builder: (dialogCtx) => _ConfirmDialog(missionTitle: m.title),
       );
+      if (!mounted) return;
+      
       if (cont == true) {
         setState(() {
           missions[index].status = MissionStatus.inProgress;
@@ -365,7 +368,7 @@ class _MissionCard extends StatelessWidget {
                             fontSize: 18, fontWeight: FontWeight.w800)),
                     const SizedBox(height: 2),
                     Text(mission.subtitle,
-                        style: TextStyle(color: Colors.black.withOpacity(.7))),
+                        style: TextStyle(color: Colors.black.withValues(alpha:.7))),
                     const SizedBox(height: 10),
                     Row(
                       children: [
@@ -470,7 +473,7 @@ class _SpecialRewardCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(subtitle,
                           style:
-                              TextStyle(color: Colors.black.withOpacity(.72))),
+                              TextStyle(color: Colors.black.withValues(alpha: .72))),
                       const SizedBox(height: 8),
                       Row(
                         children: [
@@ -523,7 +526,7 @@ class _Chip extends StatelessWidget {
         boxShadow: [
           if (!selected)
             BoxShadow(
-              color: Colors.black.withOpacity(.04),
+              color: Colors.black.withValues(alpha:.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -583,7 +586,7 @@ class _StepsSheet extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(mission.subtitle,
-                    style: TextStyle(color: Colors.black.withOpacity(.72))),
+                    style: TextStyle(color: Colors.black.withValues(alpha:.72))),
               ),
             ],
           ),
@@ -635,7 +638,7 @@ class _SimpleSheet extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(mission.subtitle,
-                    style: TextStyle(color: Colors.black.withOpacity(.72))),
+                    style: TextStyle(color: Colors.black.withValues(alpha:.72))),
               ),
             ],
           ),
@@ -748,7 +751,7 @@ class _ConfirmDialog extends StatelessWidget {
             Text(
               'Tu misión $missionTitle está dentro de tus misiones pendientes.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black.withOpacity(.85)),
+              style: TextStyle(color: Colors.black.withValues(alpha:.85)),
             ),
             const SizedBox(height: 18),
             FilledButton(
@@ -783,7 +786,7 @@ class _ModalScaffold extends StatelessWidget {
       children: [
         GestureDetector(
           onTap: () => Navigator.pop(context),
-          child: Container(color: Colors.black.withOpacity(.5)),
+          child: Container(color: Colors.black.withValues(alpha:.5)),
         ),
         Align(
           alignment: Alignment.bottomCenter,
@@ -795,7 +798,7 @@ class _ModalScaffold extends StatelessWidget {
               borderRadius: BorderRadius.circular(18),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(.15),
+                  color: Colors.black.withValues(alpha:.15),
                   blurRadius: 18,
                   offset: const Offset(0, 8),
                 ),
@@ -849,7 +852,7 @@ class _PillButton extends StatelessWidget {
   final String text;
   final Color color;
   final VoidCallback onPressed;
-  const _PillButton(this.text, this.color, this.onPressed, {super.key});
+  const _PillButton(this.text, this.color, this.onPressed);
 
   factory _PillButton.green(String t, {required VoidCallback onPressed}) =>
       _PillButton(t, const Color(0xFF31B14F), onPressed);
@@ -881,7 +884,7 @@ BoxDecoration _card({Color? borderColor}) => BoxDecoration(
       border: Border.all(color: borderColor ?? Colors.transparent, width: 1.2),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(.06),
+          color: Colors.black.withValues(alpha:.06),
           blurRadius: 12,
           offset: const Offset(0, 6),
         ),

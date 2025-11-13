@@ -14,11 +14,13 @@ class _RankingsPageState extends State<RankingsPage> {
   int _scopeIndex = 0;  // 0: San Isidro, 1: Lima, 2: Nacional
 
   // Mock data
+  /*
   final _top3 = const [
     _RankUser(name: 'Lina',   points: 330, avatarUrl: null),
     _RankUser(name: 'Mauro',  points: 230, avatarUrl: null),
     _RankUser(name: 'Sofía',  points: 130, avatarUrl: null),
   ];
+  */
 
   final _others = const [
     _RankUser(name: 'Ana García',   points: 98,  trend: 25),
@@ -33,8 +35,6 @@ class _RankingsPageState extends State<RankingsPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = _RankColors.of(context);
-    const crownSolid = 'assets/icons-svg/crown-solid-full.svg';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -376,9 +376,10 @@ class _RankUser {
   final int points;
   final int? trend; // +/- variación
   final String? avatarUrl;
+  // ignore: unused_element_parameter
   const _RankUser({required this.name, required this.points, this.trend, this.avatarUrl});
 }
-
+/*
 class _RankColors {
   final Color first  = const Color(0xFFFFF176); // amarillo suave
   final Color second = const Color(0xFF64B5F6); // azul
@@ -386,3 +387,5 @@ class _RankColors {
   const _RankColors._();
   static _RankColors of(BuildContext _) => const _RankColors._();
 }
+
+*/

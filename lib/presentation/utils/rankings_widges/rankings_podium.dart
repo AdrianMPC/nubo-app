@@ -186,23 +186,34 @@ class _Block3DNoSide extends StatelessWidget {
     required this.top,
     required this.topDepth,
     required this.topShape,
+
+    // Label simple
+    // ignore: unused_element_parameter
     this.frontLabel,
+    // ignore: unused_element_parameter
     this.frontLabelStyle,
+    // ignore: unused_element_parameter
     this.frontLabelPadding,
+
+    // Label compuesto
     this.frontLabelMain,
     this.frontLabelSuffix,
     this.frontLabelMainStyle,
     this.frontLabelSuffixStyle,
 
+    // Badge
     this.frontBadgeText,            // p.ej. "330"
     this.frontBadgeIconAsset,       // p.ej. 'assets/coins/coin.svg' o .png
     this.frontBadgeUseSvg = true,   // true=SvgPicture.asset, false=Image.asset
     this.frontBadgeGap = 6,         // separación bajo el título
     this.frontBadgePadding,         // padding interno del badge
-    this.frontBadgeBgColor,         // color de fondo del badge
-    this.frontBadgeTextStyle,       // estilo del número
-    this.frontBadgeRadius = 14,     // radio esquinas
-    this.frontBadgeIconSize,        // tamaño del icono dentro del badge
+    this.frontBadgeBgColor,
+    // ignore: unused_element_parameter
+    this.frontBadgeTextStyle,
+    // ignore: unused_element_parameter
+    this.frontBadgeRadius = 9999,   // por defecto tipo pill, cámbialo si quieres
+    // ignore: unused_element_parameter
+    this.frontBadgeIconSize,
   });
 
   final double width;
@@ -212,15 +223,18 @@ class _Block3DNoSide extends StatelessWidget {
   final double topDepth;
   final _TopShape topShape;
 
+  // Label simple
   final String? frontLabel;
   final TextStyle? frontLabelStyle;
   final EdgeInsets? frontLabelPadding;
 
+  // Label compuesto
   final String? frontLabelMain;
   final String? frontLabelSuffix;
   final TextStyle? frontLabelMainStyle;
   final TextStyle? frontLabelSuffixStyle;
 
+  // Badge
   final String? frontBadgeText;
   final String? frontBadgeIconAsset;
   final bool frontBadgeUseSvg;
@@ -315,7 +329,7 @@ class _Block3DNoSide extends StatelessWidget {
                             useSvg: frontBadgeUseSvg,
                             padding: frontBadgePadding ??
                                 const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            bgColor: frontBadgeBgColor ?? Colors.white.withOpacity(0.85),
+                            bgColor: frontBadgeBgColor ?? Colors.white.withValues(alpha: .85),
                             textStyle: frontBadgeTextStyle ??
                                 GoogleFonts.montserrat(
                                   fontWeight: FontWeight.w700,
@@ -425,15 +439,21 @@ class _BarWithAvatar extends StatelessWidget {
     required this.barHeight,
     required this.topDepth,
     required this.child,
+
+    // Avatar
     this.avatarImage,
-    this.avatarScale = 0.78,  // diámetro ≈ width * 0.9
-    this.overlapFactor = 0.1, // % del diámetro que “entra” sobre la tapa
+    // ignore: unused_element_parameter
+    this.avatarScale = 1.0,      // escala relativa del avatar
+    // ignore: unused_element_parameter
+    this.overlapFactor = 0.35,   // % del diámetro que “entra” sobre la tapa
+
     // 👑 Corona (opcional)
     this.crownAsset,
-    this.crownRotationRad = 350* math.pi / 180, // 315°
-    this.crownScale = 0.46,    // tamaño relativo al diámetro del avatar
-    this.crownDxFactor = -0.18, // desplazamiento X relativo al ancho de la corona
-    this.crownDyFactor = -0.35, // desplazamiento Y relativo al alto de la corona
+    this.crownRotationRad = 315 * math.pi / 180, // 315°
+    this.crownScale = 0.46,      // tamaño relativo al diámetro del avatar
+    this.crownDxFactor = -0.18,  // desplazamiento X relativo al ancho de la corona
+    this.crownDyFactor = -0.35,  // desplazamiento Y relativo al alto de la corona
+
     this.avatarOpacity = 1.0,
     this.crownOpacity = 1.0,
     this.fadeDuration = const Duration(milliseconds: 300),
@@ -443,11 +463,12 @@ class _BarWithAvatar extends StatelessWidget {
   final double barHeight;
   final double topDepth;
   final Widget child;
+
+  // Avatar
   final ImageProvider? avatarImage;
   final double avatarScale;
   final double overlapFactor;
 
-  // 👑 Corona
   final String? crownAsset;
   final double crownRotationRad;
   final double crownScale;
