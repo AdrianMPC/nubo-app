@@ -1,128 +1,161 @@
 import 'package:flutter/material.dart';
 import 'package:nubo/config/config.dart';
-import 'package:nubo/presentation/utils/generic_button/generic_button.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nubo/config/config.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:nubo/presentation/utils/generic_button/pill_button.dart';
+import 'package:nubo/presentation/utils/generic_button/social_button.dart';
+import 'package:nubo/presentation/views/home/rankings/rankings_view.dart';
 
 class LoginButtons extends StatelessWidget {
   const LoginButtons({super.key});
 
+  // Paleta
+  static const _blue = Color(0xFF5DB7E8);
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // Logo arriba
-        Image.asset(
-          "assets/logo/nubo_logo_login.png",
-          height: 202,
-        ),
-        const SizedBox(height: 32),
-        ButtonCustom(
-          text: "Ingresar",
-          onPressed: () {context.pushNamed("login_form_page");},
-          width: double.infinity,
-          textStyle: const TextStyle(
-            fontFamily: robotoBold,
-            fontSize: 16,
-            letterSpacing: 0.2,
-            color: Color.fromARGB(255, 71, 71, 71), // hack
-          ),
-          padding: 12,
-          color: Colors.white,
-          colorHover: Colors.grey.shade200,
-          hasBorder: true,
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black,
-              blurRadius: 8,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        // Botón Registrarse
-         ButtonCustom(
-          text: "Registrarse",
-          onPressed: () {context.pushNamed("register_form_page");},
-            // TODO: acción de login       
-          width: double.infinity,
-          colorText: Colors.grey.shade700,
-          textStyle: const TextStyle(
-            fontFamily: robotoBold,
-            fontSize: 16,
-            letterSpacing: 0.2,
-            color: Color.fromARGB(255, 71, 71, 71), // hack
-          ),
-          padding: 12,
-          color: Colors.white,
-          colorHover: Colors.grey.shade200,
-          hasBorder: true,
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black,
-              blurRadius: 8,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-
-        // Línea separadora
-        const Divider(thickness: 1),
-
-        const SizedBox(height: 24),
-
-        // Botones sociales (Google y Facebook)
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Expanded(
-              child: ButtonCustom(
-                icon: FontAwesomeIcons.google,
-                iconColor: Colors.red,
-                onPressed: () {
-                  // TODO: login con Google
-                },
-                padding: 8,
-                color: Colors.white,
-                colorHover: Colors.grey.shade200,
-                hasBorder: true,
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black,
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
-                  ),
-                ],
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // Degradado superior
+          Align(
+            alignment: Alignment.topCenter,
+            child: Container(
+              height: 70,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFFBFE6FF), Colors.white],
+                ),
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: ButtonCustom(
-                icon: FontAwesomeIcons.facebook, // placeholder
-                onPressed: () {
-                  // TODO: login con Facebook
-                },
-                padding: 8,
-                color: Colors.white,
-                colorHover: Colors.grey.shade200,
-                iconColor: Colors.blue,
-                colorText: Colors.black,
-                fontsizeText: 18,
-                hasBorder: true,
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black,
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
+          ),
+
+          // “Nubes” inferiores (3 círculos)
+          // izquierda
+          Positioned(
+            left: -170,
+            bottom: -190,
+            child: _cloud(340, Color(0xff6ecaf4)),
+          ),
+          // centro
+          Positioned(
+            left: 40,
+            right: 40,
+            bottom: -160,
+            child: _cloud(280, Color(0xffb4e2ff)),
+          ),
+          // derecha
+          Positioned(
+            right: -170,
+            bottom: -190,
+            child: _cloud(340, Color(0xbb6ecaf4)),
+          ),
+
+          // Contenido
+          SafeArea(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Logo con tinte
+                      ColorFiltered(
+                        colorFilter: const ColorFilter.mode(_blue, BlendMode.srcIn),
+                        child: Image.asset(
+                          "assets/logo/nubo_logo_login.png",
+                          height: 120,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+
+                      const SizedBox(height: 28),
+
+                      PillButton(
+                        text: 'Ingresar',
+                        onTap: () => context.pushNamed('login_form_page'),
+                      ),
+                      const SizedBox(height: 14),
+                      PillButton(
+                        text: 'Registrarse',
+                        onTap: () => context.pushNamed('register_form_page'),
+                        // si quieres un estilo levemente más claro:
+                        bg: Colors.white,
+                        fg: const Color(0xFF4A4A4A),
+                      ),
+
+                      const SizedBox(height: 18),
+                      // separador sutil
+                      Opacity(
+                        opacity: .5,
+                        child: Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: Colors.grey.shade400,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+
+                      // Botones sociales
+                      Row(
+                        children: [
+                          Expanded(
+                            child: SocialButton(
+                              iconWidget: SvgPicture.asset(
+                                googleSvg,
+                                width: 22,
+                                height: 22,
+                              ),
+                              label: 'Google',
+                              onTap: () {/* TODO: Google sign-in */},
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: SocialButton(
+                              iconWidget: SvgPicture.asset(
+                                facebookSvg,
+                                width: 22,
+                                height: 22,
+                              ),
+                              label: 'Facebook',
+                              onTap: () {/* TODO: Facebook sign-in */},
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  static Widget _cloud(double size, Color color) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
     );
   }
 }

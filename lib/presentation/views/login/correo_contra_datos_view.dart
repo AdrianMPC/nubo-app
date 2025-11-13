@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
 import 'package:nubo/config/config.dart';
 import 'package:nubo/presentation/utils/generic_button/generic_button.dart';
 import 'package:nubo/presentation/utils/generic_textfield/g_passwordtextfield.dart';
@@ -7,6 +8,9 @@ import 'package:nubo/presentation/utils/generic_textfield/g_textfield.dart';
 import 'package:nubo/services/auth_service.dart';
 import 'package:nubo/presentation/utils/navegation_router_utils/safe_navegation.dart';
 import 'package:nubo/presentation/utils/snackbar/snackbar.dart';
+import 'package:nubo/presentation/utils/generic_button/pill_button.dart';
+import 'package:nubo/presentation/utils/generic_button/social_button.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -33,215 +37,256 @@ class _LoginFormState extends State<LoginForm> {
     final textTheme = Theme.of(context).textTheme;
     const String vacio = 'No puede dejar este campo vacío';
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Flecha de retroceso
-              Align(
-                alignment: Alignment.centerLeft,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () => NavigationHelper.safePop(context)
+    return SizedBox.expand(
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // === Degradado superior ===
+          Positioned(
+            top: 0, left: 0, right: 0,
+            child: Container(
+              height: 70,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFFBFE6FF), Colors.white],
                 ),
               ),
-
-              // Título principal
-              Text(
-                "Iniciar Sesión",
-                style: textTheme.headlineMedium?.copyWith(
-                  fontFamily: robotoBold,
-                  color: Colors.black87,
-                  fontSize: 28,
-                ),
-              ),
-
-              const SizedBox(height: 36),
-
-              // Campo de correo con validación
-              UserField(
-                controller: _correoController,
-                icon: Icons.email_outlined,
-                hintText: "Correo",
-                validador: (String? value) {
-                  if (value == null || value.isEmpty) return vacio;
-                  final emailRegex = RegExp(
-                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                  if (!emailRegex.hasMatch(value)) {
-                    return 'Ingrese un correo válido';
-                  }
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 20),
-
-              // Campo de contraseña con validación
-              PasswordField(
-                controller: _passwordController,
-                backgroundColor: Colors.white,
-                hintText: "Contraseña",
-                validator: (String? value) {
-                  if (value == null || value.isEmpty) return vacio;
-                  if (value.length < 6) {
-                    return 'Debe tener al menos 6 caracteres';
-                  }
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 16),
-
-              // Olvidaste tu contraseña
-              Align(
-                alignment: Alignment.center,
-                child: TextButton(
-                  onPressed: () {
-                    _showPasswordResetDialog();
-                    NavigationHelper.safePush(context, 'recuperar');
-                  },
-                  child: Text(
-                    "¿Olvidaste tu contraseña?",
-                    style: textTheme.bodyMedium?.copyWith(
-                      fontFamily: robotoBold,
-                      color: Colors.black87,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              // Botón principal de inicio de sesión
-              ButtonCustom(
-                text: _isLoading ? "..." : "Iniciar Sesión",
-                width: double.infinity,
-                padding: 14,
-                color: const Color(0xFF3C82C3),
-                colorHover: const Color(0xFF2E6EAC),
-                colorText: Colors.white,
-                fontsizeText: 18,
-                enabled: !_isLoading,
-                onPressed: _isLoading ? null : () async {
-                  if (_formKey.currentState!.validate()) {
-                    await _signInWithEmailAndPassword();
-                  } else {
-                    SnackbarUtil.showSnack(context, message: "Corrige los errores antes de continuar");
-                  }
-                },
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 6,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              // Texto de registro
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "¿Aún no tienes una cuenta?",
-                    style: textTheme.headlineMedium?.copyWith(
-                      fontFamily: robotoCondensedMedium,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  GestureDetector(
-                    onTap: () => NavigationHelper.safePush(context,'/register'),
-                    child: Text(
-                      "Regístrate",
-                      style: textTheme.bodyMedium?.copyWith(
-                        fontFamily: robotoBold,
-                        color: Colors.black87,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-              const Divider(thickness: 1),
-              const SizedBox(height: 24),
-
-              // Botones sociales
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: ButtonCustom(
-                      icon: FontAwesomeIcons.google,
-                      iconColor: Colors.red,
-                      onPressed: () {
-                        // TODO: Login con Google
-                      },
-                      padding: 12,
-                      color: Colors.white,
-                      colorHover: Colors.grey.shade200,
-                      textStyle: const TextStyle(
-                        fontFamily: robotoBold,
-                        fontSize: 16,
-                        letterSpacing: 0.2,
-                        color: Colors.blueGrey,
-                      ),
-                      hasBorder: true,
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 6,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ButtonCustom(
-                      icon: FontAwesomeIcons.facebookF,
-                      iconColor: Colors.blueAccent,
-                      onPressed: () {
-                        // TODO: Login con Facebook
-                      },
-                      padding: 12,
-                      color: Colors.white,
-                      colorHover: Colors.grey.shade200,
-                      hasBorder: true,
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 6,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 40),
-
-              // Footer
-              const Text(
-                "Nubo © 2025",
-                style: TextStyle(
-                  fontFamily: robotoMedium,
-                  color: Colors.black87,
-                  fontSize: 14,
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+
+          // === Nubes (no interactúan) ===
+          IgnorePointer(                    // ⟵ evita interceptar taps
+            child: Stack(children: [
+              Positioned(left: -170, bottom: -190, child: _cloud(340, const Color(0xff6ecaf4))),
+              Positioned(left: 40, right: 40, bottom: -160, child: _cloud(280, const Color(0xffb4e2ff))),
+              Positioned(right: -170, bottom: -190, child: _cloud(340, const Color(0xbb6ecaf4))),
+            ]),
+          ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Altura disponible de la viewport
+              final height = constraints.maxHeight;
+              // Altura del teclado (para que no tape el botón)
+              final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+              final bool keyboardOpen = bottomInset > 0;
+
+              return SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(24, 0, 24, bottomInset + 3),
+                physics: const ClampingScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: height),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: AnimatedPadding(
+                      duration: const Duration(milliseconds: 180),
+                      curve: Curves.easeOut,
+                      // cuando NO hay teclado, simulamos centrado con ~18% de altura;
+                      // cuando hay teclado, lo dejamos cerca del top (24 px)
+                      padding: EdgeInsets.only(top: keyboardOpen ? 24 : height * 0.18),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 480),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Flecha de retroceso (se mantiene aquí dentro)
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: IconButton(
+                                icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                                onPressed: () async {
+                                  FocusScope.of(context).unfocus();
+                                  await Future.delayed(const Duration(milliseconds: 80));
+                                  NavigationHelper.safePop(context);
+                                },
+                              ),
+                            ),
+
+                            // Título principal
+                            Text(
+                              "Iniciar Sesión",
+                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                fontFamily: robotoBold,
+                                color: Colors.black87,
+                                fontSize: 28,
+                              ),
+                            ),
+                            const SizedBox(height: 28),
+
+                            // === Form ===
+                            Form(
+                              key: _formKey,
+                              child: Column(
+                                children: [
+                                  // Correo
+                                  UserField(
+                                    controller: _correoController,
+                                    icon: Icons.email_outlined,
+                                    hintText: "Correo",
+                                    validador: (String? value) {
+                                      if (value == null || value.isEmpty) return vacio;
+                                      final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                                      if (!emailRegex.hasMatch(value)) {
+                                        return 'Ingrese un correo válido';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+
+                                  const SizedBox(height: 20),
+
+                                  // Campo de contraseña con validación
+                                  PasswordField(
+                                    controller: _passwordController,
+                                    backgroundColor: Colors.white,
+                                    hintText: "Contraseña",
+                                    validator: (String? value) {
+                                      if (value == null || value.isEmpty) return vacio;
+                                      if (value.length < 6) {
+                                        return 'Debe tener al menos 6 caracteres';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+
+                                  const SizedBox(height: 12),
+
+                                  // Olvidaste tu contraseña
+                                  TextButton(
+                                    onPressed: () {
+                                      NavigationHelper.safePush(context, '/recuperar');
+                                    },
+                                    child: Text(
+                                      "¿Olvidaste tu contraseña?",
+                                      style: textTheme.bodyMedium?.copyWith(
+                                        fontFamily: robotoBold,
+                                        color: Colors.black87,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 12),
+
+                                  // === Botón principal con PillButton ===
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: PillButton(
+                                      text: _isLoading ? "..." : "Iniciar Sesión",
+                                      onTap: _isLoading
+                                          ? null
+                                          : () async {
+                                        if (_formKey.currentState!.validate()) {
+                                          await _signInWithEmailAndPassword();
+                                        } else {
+                                          SnackbarUtil.showSnack(
+                                            context,
+                                            message: "Corrige los errores antes de continuar",
+                                          );
+                                        }
+                                      },
+                                      // estilos opcionales:
+                                      bg: const Color(0xFF3C82C3),
+                                      fg: Colors.white,
+                                      elevation: 4,
+                                      borderColor: Colors.transparent,
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 16),
+
+                                  // ¿No tienes cuenta?
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        "¿Aún no tienes una cuenta?",
+                                        style: textTheme.headlineMedium?.copyWith(
+                                          fontFamily: robotoCondensedMedium,
+                                          color: Colors.black87,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      GestureDetector(
+                                        onTap: () => context.pushReplacementNamed('register_form_page'),
+                                        child: Text(
+                                          "Regístrate",
+                                          style: textTheme.bodyMedium?.copyWith(
+                                            fontFamily: robotoBold,
+                                            color: Colors.black87,
+                                            decoration: TextDecoration.underline,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 22),
+                                  Opacity(
+                                    opacity: .5,
+                                    child: Divider(
+                                      height: 1,
+                                      thickness: 1,
+                                      color: Colors.grey.shade400,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 18),
+
+                                  // === Botones sociales con SocialButton ===
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: SocialButton(
+                                          label: 'Google',
+                                          onTap: () {/* TODO: Google sign-in */},
+                                          iconWidget: SvgPicture.asset(
+                                            googleSvg, // tu asset multicolor
+                                            width: 20,
+                                            height: 20,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: SocialButton(
+                                          label: 'Facebook',
+                                          onTap: () {/* TODO: Facebook sign-in */},
+                                          iconWidget: SvgPicture.asset(
+                                            facebookSvg,
+                                            width: 20,
+                                            height: 20,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 36),
+
+                                  const Text(
+                                    "Nubo © 2025",
+                                    style: TextStyle(
+                                      fontFamily: robotoMedium,
+                                      color: Colors.black87,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -339,6 +384,23 @@ class _LoginFormState extends State<LoginForm> {
           ],
         );
       },
+    );
+  }
+  static Widget _cloud(double size, Color color) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
     );
   }
 }

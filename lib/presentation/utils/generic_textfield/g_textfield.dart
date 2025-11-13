@@ -80,6 +80,10 @@ class _UserFieldState extends State<UserField> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    const kFieldTextStyle   = TextStyle(fontSize: 16, height: 1.2, color: Colors.black87);
+    const kHintStyle        = TextStyle(color: Colors.black54, fontSize: 16, height: 1.2);
+    const kContentPadding   = EdgeInsets.symmetric(vertical: 14, horizontal: 16);
+    const kIconConstraints  = BoxConstraints(minWidth: 48, minHeight: 48);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,7 +91,7 @@ class _UserFieldState extends State<UserField> {
         if ((widget.labeltext ?? '').isNotEmpty) ...[
           Text(
             widget.labeltext!,
-            style: textTheme.displayMedium?.copyWith(color: gray400),
+            style: textTheme.displayMedium?.copyWith(color: Colors.black54),
           ),
           const SizedBox(height: 6),
         ],
@@ -101,24 +105,48 @@ class _UserFieldState extends State<UserField> {
           textInputAction: widget.textInputAction,
           textCapitalization: widget.textCapitalization,
           maxLength: widget.maxLength,
-          style: textTheme.headlineMedium,
+          style: kFieldTextStyle,
           decoration: InputDecoration(
             counterText: widget.maxLength != null ? null : '', // oculta contador si no hay maxLength
             floatingLabelBehavior: FloatingLabelBehavior.never,
             hintText: widget.hintText,
-            hintStyle: textTheme.displayMedium?.copyWith(color: gray400),
+            hintStyle: kHintStyle,
             filled: true,
             fillColor: widget.backgroundColor,
             isDense: false,
             prefixIcon: widget.icon != null
-                ? Icon(widget.icon, size: 24, color: gray400)
+                ? Icon(widget.icon, size: 24, color: Colors.black54)
                 : null,
-            suffixIcon: const Padding(
-              padding: EdgeInsets.fromLTRB(0, 0, 4, 0),
-            ),
+            prefixIconConstraints: kIconConstraints,
+            suffixIcon: const SizedBox.shrink(),
+            suffixIconConstraints: kIconConstraints,
+            contentPadding: kContentPadding,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(25),
               borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(25),
+              borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(25),
+              borderSide: const BorderSide(color: Color(0xFF3C82C3), width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(25),
+              borderSide: const BorderSide(color: Colors.redAccent, width: 1),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(25),
+              borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(25),
+              borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+            ),
+            errorStyle: const TextStyle(
+              fontWeight: FontWeight.w600,
             ),
           ),
           validator: widget.validador,
