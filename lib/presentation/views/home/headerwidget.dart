@@ -1,94 +1,114 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:nubo/config/config.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:nubo/config/constants/enviroments.dart';
+import 'package:nubo/controller/usuario_controller.dart';
 
-class HomeGreetingHeader extends StatelessWidget {
-  const HomeGreetingHeader({
-    super.key,
-    required this.name,
-    required this.streak,
-    this.onTap,
-  });
+class HomeTopStatsRowContainer extends StatelessWidget {
+  const HomeTopStatsRowContainer({super.key});
 
-  final String name;
-  final int streak;
-  final VoidCallback? onTap;
+  String sanitizeNumber(String? input) {
+    if (input == null) return '0';
+    final n = int.tryParse(input);
+    return n?.toString() ?? '0';
+  }
 
   @override
   Widget build(BuildContext context) {
-    final titleStyle = TextStyle(
-      fontFamily: robotoBlack,
-      fontSize: 28,
-      height: 1.05,
-      letterSpacing: -0.2,
-      color: Colors.black, // Título negro
-    );
+    final controller = UserController();
+    
+    return StreamBuilder<String>(
+      stream: controller.coinsStream(),
+      builder: (context, coinsSnapshot) {
+        final coins = sanitizeNumber(coinsSnapshot.data);
 
-    final subtitleStyle = TextStyle(
-      fontFamily: robotoLight,
-      fontSize: 16,
-      height: 1.25,
-      color: gray400, // gris claro
-    );
+        return FutureBuilder<String>(
+          future: controller.computeStreakAsString(),
+          builder: (context, streakSnapshot) {
+            final streak = sanitizeNumber(streakSnapshot.data);
 
-    final streakNumberStyle = TextStyle(
-      fontFamily: robotoBold,
-      fontSize: 28, // aumentado
-      height: 1.0,
-      color: warningActive, // naranja del tema
+            return _HomeTopStatsRow(
+              rank: '-',      // TODO: VER RANKING
+              coins: coins,
+              streak: streak,
+            );
+          },
+        );
+      },
     );
+  }
+}
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 7),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Hola, $name', style: titleStyle),
-                  const SizedBox(height: 6),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '¡Hoy es un gran dia\npara reciclar!',
-                          style: subtitleStyle,
-                        ),
-                      ),
-                      const SizedBox(width: 0),
-                      SvgPicture.asset(
-                        streakSvg,
-                        width: 24,
-                        height: 29,
-                        colorFilter: const ColorFilter.mode(
-                          Colors.orange,
-                          BlendMode.srcIn,
-                        ),
-                      ),
-                      const SizedBox(width: 0),
-                      Text('$streak', style: streakNumberStyle),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 0),
-            // --- Mascota ---
-            Image.asset(
-              'assets/logo/nubo_sin_fondo.png',
-              width: 170, // un poco más grande
-              fit: BoxFit.contain,
-              semanticLabel: 'Mascota Nubo saludando',
-            ),
-          ],
-        ),
+class _HomeTopStatsRow extends StatelessWidget {
+  const _HomeTopStatsRow({
+    required this.rank,
+    required this.coins,
+    required this.streak,
+  });
+
+  final String rank;
+  final String coins;
+  final String streak;
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: width * 0.05,
+        vertical: 8,
       ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _TopItem(
+            svgPath: leaderboardSvg,
+            value: rank,
+          ),
+          _TopItem(
+            svgPath: nuboCoinSvg,
+            value: coins,
+          ),
+          _TopItem(
+            svgPath: streakSvg,
+            value: streak,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TopItem extends StatelessWidget {
+  const _TopItem({
+    required this.svgPath,
+    required this.value,
+  });
+
+  final String svgPath;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final w = MediaQuery.of(context).size.width;
+    final iconSize = w * 0.065;
+
+    return Row(
+      children: [
+        SvgPicture.asset(
+          svgPath,
+          width: iconSize,
+          height: iconSize,
+        ),
+        const SizedBox(width: 6),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: w * 0.045,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
 }

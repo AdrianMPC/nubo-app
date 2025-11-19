@@ -111,7 +111,9 @@ const streakSvg = 'assets/icons-svg/streak.svg';
 const googleSvg = 'assets/icons-svg/google.svg';
 const facebookSvg = 'assets/icons-svg/facebook.svg';
 const crownSolid = 'assets/icons-svg/crown-solid-full.svg';
-const nuboCoinSvg = 'assets/icons-svg/nubo_coin.svg';
+const nuboCoinSvg = 'assets/icons-svg/coins_nubo.svg';
+const leaderboardSvg = 'assets/icons-svg/leaderboard.svg';
+
 
 // img - png
 

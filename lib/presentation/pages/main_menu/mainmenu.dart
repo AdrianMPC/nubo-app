@@ -39,12 +39,9 @@ class HomePage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              // --- Header de saludo ---
-              const HomeGreetingHeader(
-              // TODO: Cambiar por whatever nos da el backend
-                name: 'Armando', 
-                streak: 10,
-              ),
+              // --- Header de stats ---
+              HomeTopStatsRowContainer(),
+              
               MissionsSection(onSeeAll: () {
                 NavigationHelper.safePush(context, '/missions');
               },),
