@@ -1,8 +1,10 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:nubo/presentation/utils/navegation_router_utils/safe_navegation.dart';
 import 'package:nubo/presentation/utils/snackbar/snackbar.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+
+// 👇 Ajusta esta ruta a donde tengas mision_controller.dart
+import 'package:nubo/controller/mision_controller.dart';
 
 class MissionsPage extends StatefulWidget {
   static const String name = 'missions_page';
@@ -16,15 +18,17 @@ enum MissionStatus { available, inProgress, completed }
 enum QrStage { none, readyToStart, generating, qrShown, validated, nextSteps, done }
 
 class Mission {
-  final String title;
-  final String subtitle;
-  final int reward;
+  final String id;
+  String title;
+  String subtitle;
+  int reward;
 
   MissionStatus status;
   QrStage qrStage;
-  String? qrPayload; // FRONTEND SIMULADO
+  String? qrPayload;
 
   Mission({
+    required this.id,
     required this.title,
     required this.subtitle,
     required this.reward,
@@ -34,19 +38,12 @@ class Mission {
   });
 }
 
+
 class _MissionsPageState extends State<MissionsPage> {
-  final missions = <Mission>[
-    Mission(
-      title: 'Recicla objetos sólidos',
-      subtitle: 'plásticos, latas, papel, bolsa, cartón, vidrios, cable',
-      reward: 80,
-    ),
-    Mission(
-      title: 'Reciclaje en la familia',
-      subtitle: 'Logra que un miembro de tu familia recicle contigo y súbanlo juntos',
-      reward: 80,
-    ),
-  ];
+  final _missionController = MissionController();
+
+  /// Estado local de misiones por id, para conservar qrStage, etc.
+  final Map<String, Mission> _missionsById = {};
 
   @override
   Widget build(BuildContext context) {
@@ -66,55 +63,184 @@ class _MissionsPageState extends State<MissionsPage> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => NavigationHelper.safePop(context)
+          onPressed: () => NavigationHelper.safePop(context),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        children: [
-          _SpecialRewardCard(
-            title: '¡Realiza tu Eco Quiz!',
-            subtitle: 'Aprende sobre el reciclaje y gana puntos mientras lo haces.',
-            reward: 100,
-            onAccept: () {},
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            children: const [
-              _Chip(label: 'Reciclaje', icon: Icons.eco_rounded, selected: true),
-              _Chip(label: 'Empresas', icon: Icons.bolt_rounded),
-              _Chip(label: 'Prendas', icon: Icons.checkroom_rounded),
+      body: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: _missionController.availableMissionsStream(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final docs = snapshot.data ?? [];
+
+          // Sincroniza el estado local _missionsById con los docs del usuario.
+          final visibleMissions = _syncMissionsWithSnapshot(docs);
+
+          if (visibleMissions.isEmpty) {
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              children: const [
+                SizedBox(height: 40),
+                Center(
+                  child: Text(
+                    'No tienes misiones disponibles por ahora.',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            );
+          }
+
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            children: [
+              _SpecialRewardCard(
+                title: '¡Realiza tu Eco Quiz!',
+                subtitle:
+                    'Aprende sobre el reciclaje y gana puntos mientras lo haces.',
+                reward: 100,
+                onAccept: () {},
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                children: const [
+                  _Chip(label: 'Reciclaje', icon: Icons.eco_rounded, selected: true),
+                  _Chip(label: 'Empresas', icon: Icons.bolt_rounded),
+                  _Chip(label: 'Prendas', icon: Icons.checkroom_rounded),
+                ],
+              ),
+              const SizedBox(height: 12),
+              for (final mission in visibleMissions)
+                _MissionCard(
+                  mission: mission,
+                  onPrimary: () => _onPrimary(mission),
+                ),
             ],
-          ),
-          const SizedBox(height: 12),
-          for (int i = 0; i < missions.length; i++)
-            _MissionCard(
-              mission: missions[i],
-              onPrimary: () => _onPrimary(i),
-            ),
-        ],
+          );
+        },
       ),
     );
   }
 
-  void _onPrimary(int index) {
-    final m = missions[index];
+  /// Sincroniza los docs de Firestore con el estado local de misiones.
+  List<Mission> _syncMissionsWithSnapshot(List<Map<String, dynamic>> docs) {
+    final seenIds = <String>{};
 
-    if (m.status == MissionStatus.available) {
-      _showAcceptSheet(index);
+    for (final m in docs) {
+      final id = (m['id'] ?? '') as String;
+      if (id.isEmpty) continue;
+      seenIds.add(id);
+
+      final existing = _missionsById[id];
+
+    // ========= AQUÍ APLICAMOS FALLBACKS =========
+    final backendTitle   = (m['title'] as String? ?? '').trim();
+    final backendSubtitle = (m['subtitle'] as String? ?? '').trim();
+
+    // Si vienen vacíos de Firestore, usamos textos del frontend
+    final title    = backendTitle.isEmpty   ? _fallbackTitle(id)    : backendTitle;
+    final subtitle = backendSubtitle.isEmpty ? _fallbackSubtitle(id) : backendSubtitle;
+    // ===========================================
+      final reward = _parseCoins(m['coinsReward']);
+      final statusStr = (m['status'] ?? 'available') as String;
+      final status = _statusFromString(statusStr);
+
+      if (existing == null) {
+        _missionsById[id] = Mission(
+          id: id,
+          title: title,
+          subtitle: subtitle,
+          reward: reward,
+          status: status,
+        );
+      } else {
+        existing.title = title;        // 👈 se refresca desde Firestore
+        existing.subtitle = subtitle;
+        existing.reward = reward;
+        existing.status = status;
+      }
+    }
+
+    // Limpia misiones locales que ya no vienen de Firestore
+    _missionsById.removeWhere((key, value) => !seenIds.contains(key));
+
+    final list = _missionsById.values.toList();
+    list.sort((a, b) => a.title.compareTo(b.title));
+    return list;
+  }
+
+  int _parseCoins(dynamic raw) {
+    if (raw is int) return raw;
+    if (raw is String) return int.tryParse(raw) ?? 0;
+    return 0;
+  }
+
+  MissionStatus _statusFromString(String? value) {
+    switch (value) {
+      case 'in_progress':
+        return MissionStatus.inProgress;
+      case 'completed':
+        return MissionStatus.completed;
+      case 'available':
+      default:
+        return MissionStatus.available;
+    }
+  }
+
+  String _buildTodayPeriodKey() {
+  final now = DateTime.now();
+  final y = now.year.toString().padLeft(4, '0');
+  final m = now.month.toString().padLeft(2, '0');
+  final d = now.day.toString().padLeft(2, '0');
+  return '$y-$m-$d';
+  }
+
+
+  // ====== Fallbacks de frontend por id de misión ======
+
+  String _fallbackTitle(String id) {
+    switch (id) {
+      // Ajusta estos ids a los que realmente usas en Firestore
+      case 'recycle_plastic_v1':
+        return 'Recicla objetos sólidos';
+      case 'family_recycle_v1':
+        return 'Reciclaje en la familia';
+      default:
+        return 'Misión';
+    }
+  }
+
+  String _fallbackSubtitle(String id) {
+    switch (id) {
+      case 'recycle_plastic_v1':
+        return 'plásticos, latas, papel, bolsa, cartón, vidrios, cable';
+      case 'family_recycle_v1':
+        return 'Logra que un miembro de tu familia recicle contigo y súbanlo juntos';
+      default:
+        return '';
+    }
+  }
+
+  // Ahora trabajamos con la misión directamente, no con índices
+  void _onPrimary(Mission mission) {
+    if (mission.status == MissionStatus.available) {
+      _showAcceptSheet(mission);
       return;
     }
-    if (m.status == MissionStatus.inProgress) {
-      _openQrFlow(index); // salta directo a la etapa actual
+    if (mission.status == MissionStatus.inProgress) {
+      _openQrFlow(mission); // salta directo a la etapa actual
       return;
     }
     // completed: sin acción
   }
 
   // --------- Aceptar → inProgress + confirmación ----------
-  Future<void> _showAcceptSheet(int index) async {
-    final m = missions[index];
+  Future<void> _showAcceptSheet(Mission mission) async {
+    final m = mission;
+
     final accepted = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -122,7 +248,6 @@ class _MissionsPageState extends State<MissionsPage> {
       builder: (sheetCtx) => _StepsSheet(
         mission: m,
         primary: _PillButton.green('Aceptar', onPressed: () {
-           //TODO - buscar alternativa en gorouter
           Navigator.of(sheetCtx).pop(true);
         }),
       ),
@@ -135,39 +260,46 @@ class _MissionsPageState extends State<MissionsPage> {
         builder: (dialogCtx) => _ConfirmDialog(missionTitle: m.title),
       );
       if (cont == true) {
+        // 1) Actualizamos el estado local → botón cambia a "Seguir"
         setState(() {
-          missions[index].status = MissionStatus.inProgress;
-          missions[index].qrStage = QrStage.readyToStart;
+          mission.status = MissionStatus.inProgress;
+          mission.qrStage = QrStage.readyToStart;
         });
+
+        // 2) Persistimos en Firestore (missions_state.status = "in_progress")
+        await _missionController.updateMissionStatus(
+          mission.id,
+          'in_progress',
+        );
       }
     }
   }
 
   // --------- Flujo QR (Fig.1 → Fig.6) ----------
-  Future<void> _openQrFlow(int index) async {
-    final m = missions[index];
+  Future<void> _openQrFlow(Mission mission) async {
+    final m = mission;
 
     // Si ya está validado/siguiente/done o completado, saltar
     if (m.qrStage == QrStage.validated ||
         m.qrStage == QrStage.nextSteps ||
         m.qrStage == QrStage.done ||
         m.status == MissionStatus.completed) {
-      await _openStage(index);
+      await _openStage(m);
       return;
     }
 
     // Si no inició o listo para iniciar, abrir Fig.1
     if (m.qrStage == QrStage.none || m.qrStage == QrStage.readyToStart) {
-      await _openStage(index);
+      await _openStage(m);
       return;
     }
 
     // Otros estados intermedios
-    await _openStage(index);
+    await _openStage(m);
   }
 
-  Future<void> _openStage(int index) async {
-    final m = missions[index];
+  Future<void> _openStage(Mission mission) async {
+    final m = mission;
 
     switch (m.qrStage) {
       case QrStage.none:
@@ -181,7 +313,7 @@ class _MissionsPageState extends State<MissionsPage> {
             mission: m,
             primary: _PillButton.green('Generar QR', onPressed: () {
               NavigationHelper.safePop(context); // cerrar Fig.1
-              _startGenerate(index);
+              _startGenerate(m);
             }),
             secondary: _PillButton.blue('Ver en Mapa', onPressed: () {
               SnackbarUtil.showSnack(context, message: 'Próximamente');
@@ -207,13 +339,55 @@ class _MissionsPageState extends State<MissionsPage> {
         break;
 
       case QrStage.qrShown:
+        final code = m.qrPayload;
+        if (code == null) {
+          // No hay código QR: volver al estado listo para iniciar
+          setState(() => m.qrStage = QrStage.readyToStart);
+          return;
+        }
+
         await showModalBottomSheet<void>(
           context: context,
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
-          builder: (sheetCtx) => _QrSheet(titleExtra: null, mission: m),
+          builder: (sheetCtx) {
+            return StreamBuilder<Map<String, dynamic>?>(
+              stream: _missionController.watchQrToken(code),
+              builder: (context, snapshot) {
+                final data = snapshot.data;
+                final tokenStatus =
+                    (data?['status'] ?? 'pending_validation') as String;
+
+                // Si el backend/agent cambió el token a "validated"
+                if (tokenStatus == 'validated') {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (!mounted) return;
+                    setState(() {
+                      m.qrStage = QrStage.validated;
+                    });
+                    // Cerrar este sheet si sigue abierto
+                    if (Navigator.of(sheetCtx).canPop()) {
+                      Navigator.of(sheetCtx).pop();
+                    }
+                    // Abrir la siguiente etapa (QR Validado)
+                    _openStage(m);
+                  });
+                }
+
+                final titleExtra =
+                    tokenStatus == 'validated' ? 'QR Validado' : null;
+
+                return _QrSheet(
+                  mission: m,
+                  titleExtra: titleExtra,
+                  validated: tokenStatus == 'validated',
+                );
+              },
+            );
+          },
         );
         break;
+
 
       case QrStage.validated:
         await showModalBottomSheet<void>(
@@ -262,8 +436,9 @@ class _MissionsPageState extends State<MissionsPage> {
             onRedeem: () {
               NavigationHelper.safePop(sheetCtx);
               setState(() {
-                missions[index].status = MissionStatus.completed;
+                mission.status = MissionStatus.completed;
               });
+              // TODO: opcional -> actualizar missions_state.{status = 'completed'}
             },
           ),
         );
@@ -271,56 +446,58 @@ class _MissionsPageState extends State<MissionsPage> {
     }
   }
 
-  // --------- Simulaciones de transición ----------
-  void _startGenerate(int index) {
-    final m = missions[index];
+  // --------- Generación real de QR (sin simulación automática) ----------
+  Future<void> _startGenerate(Mission mission) async {
+    final m = mission;
 
+    // Si ya está validado / siguiente / done o completado, no regenerar
     if (m.qrStage == QrStage.validated ||
         m.qrStage == QrStage.nextSteps ||
         m.qrStage == QrStage.done ||
         m.status == MissionStatus.completed) {
-        SnackbarUtil.showSnack(context, message: 'El QR ya fue validado o canjeado.');
-      _openStage(index);
+      SnackbarUtil.showSnack(
+        context,
+        message: 'El QR ya fue validado o la misión fue completada.',
+      );
+      await _openStage(m);
       return;
     }
 
     setState(() {
       m.qrStage = QrStage.generating;
-      m.qrPayload = _fakeQrPayload(m); // TODO backend real
+      m.qrPayload = null;
     });
 
-    // 1.5 s → mostrar QR
-    Future.delayed(const Duration(milliseconds: 1500), () {
+    try {
+      final periodKey = _buildTodayPeriodKey();
+
+      // Genera token en Firestore y enlaza en missions_state
+      final code = await _missionController.generateAndAttachQr(
+        missionId: m.id,
+        periodKey: periodKey,
+        // ttl: const Duration(minutes: 10), // si luego quieres expiración
+      );
+
       if (!mounted) return;
-      setState(() => m.qrStage = QrStage.qrShown);
-      _openStage(index);
 
-      // 2 s → validar
-      Future.delayed(const Duration(milliseconds: 2000), () {
-        if (!mounted) return;
-        setState(() => m.qrStage = QrStage.validated);
-        _openStage(index);
-
-        // 1.5 s → “Ahora…”
-        Future.delayed(const Duration(milliseconds: 1500), () {
-          if (!mounted) return;
-          setState(() => m.qrStage = QrStage.nextSteps);
-          _openStage(index);
-
-          // 1.5 s → “¡Misión completada!”
-          Future.delayed(const Duration(milliseconds: 1500), () {
-            if (!mounted) return;
-            setState(() => m.qrStage = QrStage.done);
-            _openStage(index);
-          });
-        });
+      setState(() {
+        m.qrPayload = code;       // este code será el payload del QR
+        m.qrStage = QrStage.qrShown;
       });
-    });
-  }
 
-  String _fakeQrPayload(Mission m) {
-    final rnd = Random().nextInt(999999).toString().padLeft(6, '0');
-    return 'MISION:${m.title}|R:${m.reward}|TS:${DateTime.now().millisecondsSinceEpoch}|N:$rnd';
+      // Mostrar hoja con el QR (estado 'qrShown')
+      await _openStage(m);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        m.qrStage = QrStage.readyToStart;
+        m.qrPayload = null;
+      });
+      SnackbarUtil.showSnack(
+        context,
+        message: 'No se pudo generar el QR. Inténtalo de nuevo.',
+      );
+    }
   }
 }
 
@@ -363,8 +540,11 @@ class _MissionCard extends StatelessWidget {
                         style: const TextStyle(
                             fontSize: 18, fontWeight: FontWeight.w800)),
                     const SizedBox(height: 2),
-                    Text(mission.subtitle,
-                        style: TextStyle(color: Colors.black.withValues(alpha: .7))),
+                    Text(
+                      mission.subtitle,
+                      style:
+                          TextStyle(color: Colors.black.withValues(alpha: .7)),
+                    ),
                     const SizedBox(height: 10),
                     Row(
                       children: [
@@ -467,9 +647,11 @@ class _SpecialRewardCard extends StatelessWidget {
                           style: const TextStyle(
                               fontWeight: FontWeight.w800, fontSize: 16)),
                       const SizedBox(height: 4),
-                      Text(subtitle,
-                          style:
-                              TextStyle(color: Colors.black.withValues(alpha:.72))),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                            color: Colors.black.withValues(alpha: .72)),
+                      ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
@@ -522,7 +704,7 @@ class _Chip extends StatelessWidget {
         boxShadow: [
           if (!selected)
             BoxShadow(
-              color: Colors.black.withValues(alpha:.04),
+              color: Colors.black.withValues(alpha: .04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -533,11 +715,13 @@ class _Chip extends StatelessWidget {
         children: [
           Icon(icon, size: 18, color: selected ? const Color(0xFFF4A41C) : null),
           const SizedBox(width: 6),
-          Text(label,
-              style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color:
-                      selected ? const Color(0xFFF4A41C) : Colors.black87)),
+          Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: selected ? const Color(0xFFF4A41C) : Colors.black87,
+            ),
+          ),
         ],
       ),
     );
@@ -581,8 +765,11 @@ class _StepsSheet extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(mission.subtitle,
-                    style: TextStyle(color: Colors.black.withValues(alpha:.72))),
+                child: Text(
+                  mission.subtitle,
+                  style: TextStyle(
+                      color: Colors.black.withValues(alpha: .72)),
+                ),
               ),
             ],
           ),
@@ -618,9 +805,10 @@ class _SimpleSheet extends StatelessWidget {
         children: [
           _SheetHeader(onClose: () => NavigationHelper.safePop(context)),
           const SizedBox(height: 4),
-          Text(mission.title,
-              style:
-                  const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+          Text(
+            mission.title,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+          ),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -633,8 +821,11 @@ class _SimpleSheet extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(mission.subtitle,
-                    style: TextStyle(color: Colors.black.withValues(alpha:.72))),
+                child: Text(
+                  mission.subtitle,
+                  style: TextStyle(
+                      color: Colors.black.withValues(alpha: .72)),
+                ),
               ),
             ],
           ),
@@ -664,9 +855,10 @@ class _QrSheet extends StatelessWidget {
         children: [
           _SheetHeader(onClose: () => NavigationHelper.safePop(context)),
           const SizedBox(height: 4),
-          Text(mission.title,
-              style:
-                  const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+          Text(
+            mission.title,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+          ),
           const SizedBox(height: 8),
           if (titleExtra != null)
             Text(
@@ -700,9 +892,10 @@ class _DoneSheet extends StatelessWidget {
         children: [
           _SheetHeader(onClose: () => NavigationHelper.safePop(context)),
           const SizedBox(height: 4),
-          Text(mission.title,
-              style:
-                  const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+          Text(
+            mission.title,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+          ),
           const SizedBox(height: 16),
           const Text(
             '¡Misión completada!',
@@ -712,7 +905,6 @@ class _DoneSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          // Tu imagen (ruta final):
           Image.asset(
             'assets/logo/nubo_ok.png',
             height: 140,
@@ -759,10 +951,9 @@ class _ConfirmDialog extends StatelessWidget {
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
-               //TODO - buscar alternativa en gorouter
               onPressed: () => Navigator.of(context).pop(true),
-              child:
-                  const Text('Continuar', style: TextStyle(fontWeight: FontWeight.w800)),
+              child: const Text('Continuar',
+                  style: TextStyle(fontWeight: FontWeight.w800)),
             ),
           ],
         ),
@@ -783,7 +974,7 @@ class _ModalScaffold extends StatelessWidget {
       children: [
         GestureDetector(
           onTap: () => NavigationHelper.safePop(context),
-          child: Container(color: Colors.black.withValues(alpha:.5)),
+          child: Container(color: Colors.black.withValues(alpha: .5)),
         ),
         Align(
           alignment: Alignment.bottomCenter,
@@ -795,7 +986,7 @@ class _ModalScaffold extends StatelessWidget {
               borderRadius: BorderRadius.circular(18),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha:.15),
+                  color: Colors.black.withValues(alpha: .15),
                   blurRadius: 18,
                   offset: const Offset(0, 8),
                 ),
@@ -881,7 +1072,7 @@ BoxDecoration _card({Color? borderColor}) => BoxDecoration(
       border: Border.all(color: borderColor ?? Colors.transparent, width: 1.2),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withValues(alpha:.06),
+          color: Colors.black.withValues(alpha: .06),
           blurRadius: 12,
           offset: const Offset(0, 6),
         ),
