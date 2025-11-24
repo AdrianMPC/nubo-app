@@ -45,10 +45,10 @@ Stream<List<Map<String, dynamic>>> availableMissionsStream() {
             await _db.collection('missions').doc(missionId).get();
         if (!missionSnap.exists) continue;
 
-        final missionData =
-            missionSnap.data() as Map<String, dynamic>? ?? {};
-        final instructions =
-            (missionData['instructions'] as Map<String, dynamic>?) ?? {};
+          final missionData =
+              missionSnap.data() as Map<String, dynamic>? ?? {};
+          final instructions =
+              (missionData['instructions'] as Map<String, dynamic>?) ?? {};
 
         final title =
             (missionData['title'] ?? instructions['title'] ?? '') as String;
