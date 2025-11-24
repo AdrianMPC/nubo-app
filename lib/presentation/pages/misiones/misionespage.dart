@@ -940,7 +940,7 @@ class _DoneSheet extends StatelessWidget {
             fit: BoxFit.contain,
           ),
           const SizedBox(height: 12),
-          _PillButton.orange('Canjear', onPressed: onRedeem),
+          _PillButton.orange('Aceptar', onPressed: onRedeem),
         ],
       ),
     );
